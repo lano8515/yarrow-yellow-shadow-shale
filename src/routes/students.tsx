@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { IssueDialog } from "@/components/issue-dialog";
+import { BulkPeopleImport } from "@/components/bulk-people-import";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ function StudentsPage() {
   const [q, setQ] = useState("");
   const [klass, setKlass] = useState("all");
   const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [issueFor, setIssueFor] = useState<Student | null>(null);
 
   const rows = useMemo(() => {
@@ -67,14 +69,14 @@ function StudentsPage() {
       <PageHeader
         kicker="People"
         title="Student register"
-        description="Admission number is the unique key. Place a pupil in a class stream and a dormitory under a block."
+        description="Admission number is the unique key. Place a pupil in a class stream and a dormitory under a block. Bulk import from Excel or a pasted spreadsheet."
         actions={
           <>
             <Button variant="outline" onClick={() => exportStudents(studentsQ.data ?? [])}>
               <Download className="size-4" /> Excel
             </Button>
-            <Button variant="outline" asChild>
-              <Link to="/import"><FileSpreadsheet className="size-4" /> Import</Link>
+            <Button variant="outline" onClick={() => setBulkOpen(true)}>
+              <FileSpreadsheet className="size-4" /> Bulk import
             </Button>
             <Button onClick={() => setOpen(true)}><Plus className="size-4" /> Register</Button>
           </>
@@ -149,6 +151,7 @@ function StudentsPage() {
         campus={campusQ.data ?? initial.campus}
         onSaved={() => qc.invalidateQueries({ queryKey: ["students"] })}
       />
+      <BulkPeopleImport kind="students" open={bulkOpen} onOpenChange={setBulkOpen} />
       <IssueDialog
         open={!!issueFor}
         onOpenChange={(v) => !v && setIssueFor(null)}

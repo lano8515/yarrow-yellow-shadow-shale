@@ -197,7 +197,20 @@ function rowsOf(sheet: XLSX.WorkSheet) {
 }
 
 export function parseExcelFile(buffer: ArrayBuffer): ParsedExcel {
-  const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+  return parseWorkbook(XLSX.read(buffer, { type: "array", cellDates: true }));
+}
+
+export function parseSpreadsheetText(text: string): ParsedExcel {
+  const trimmed = text.replace(/^\uFEFF/, "").trim();
+  if (!trimmed) {
+    return { students: [], staff: [], items: [], errors: [], sheets: [] };
+  }
+  const first = trimmed.split(/\r?\n/, 1)[0] ?? "";
+  const fs = first.includes("\t") ? "\t" : ",";
+  return parseWorkbook(XLSX.read(trimmed, { type: "string", FS: fs, cellDates: true }));
+}
+
+function parseWorkbook(wb: XLSX.WorkBook): ParsedExcel {
   const result: ParsedExcel = { students: [], staff: [], items: [], errors: [], sheets: wb.SheetNames };
   for (const name of wb.SheetNames) {
     if (/guide|read ?me|campus|lookup|valid/i.test(name)) continue;
@@ -348,6 +361,81 @@ export function downloadTemplate() {
   XLSX.utils.book_append_sheet(wb, sf.ws, sf.name);
   XLSX.utils.book_append_sheet(wb, so.ws, so.name);
   XLSX.writeFile(wb, "Arden-Stores-bulk-template.xlsx");
+}
+
+const STUDENT_HEADERS = [
+  "admission_no",
+  "first_name",
+  "last_name",
+  "gender",
+  "date_of_birth",
+  "class",
+  "stream",
+  "block",
+  "dormitory",
+  "guardian_name",
+  "guardian_phone",
+  "status",
+  "notes",
+];
+
+const STAFF_HEADERS = [
+  "role_type",
+  "tsc_no",
+  "id_no",
+  "first_name",
+  "last_name",
+  "job_title",
+  "department",
+  "phone",
+  "status",
+  "notes",
+];
+
+const SAMPLE_STUDENTS = [
+  STUDENT_HEADERS,
+  ["401/2026", "Faith", "Cherono", "female", "2013-04-02", "Form 1", "B", "Olive", "Olive 1", "Mercy Cherono", "0712 000 111", "active", "Bulk import"],
+  ["402/2026", "Hassan", "Ali", "male", "2012-08-19", "Form 2", "A", "Cedar", "Cedar 1", "Amina Ali", "0722 000 222", "active", ""],
+];
+
+const SAMPLE_STAFF = [
+  STAFF_HEADERS,
+  ["teacher", "TSC/88901", "", "Mercy", "Chebet", "Physics teacher", "Sciences", "0710 441 220", "active", "Bulk import"],
+  ["non_teaching", "", "55667788", "Joseph", "Mwenda", "Store clerk", "Administration", "0720 118 334", "active", ""],
+];
+
+const ITEM_HEADERS = [
+  "sku",
+  "name",
+  "category",
+  "unit",
+  "quantity_on_hand",
+  "reorder_level",
+  "unit_cost",
+  "location",
+  "description",
+];
+
+const SAMPLE_ITEMS = [
+  ITEM_HEADERS,
+  ["STA-PPR-A4", "A4 photocopy paper", "Stationery", "ream", 40, 10, 650, "Main store", "Bulk import"],
+  ["UNI-SCK-01", "Grey school socks", "Uniforms", "pair", 120, 30, 180, "Uniform store", ""],
+];
+
+export function downloadPeopleTemplate(kind: "students" | "staff" | "items") {
+  const wb = XLSX.utils.book_new();
+  if (kind === "students") {
+    XLSX.utils.book_append_sheet(wb, sheet(SAMPLE_STUDENTS, "Students").ws, "Students");
+    XLSX.writeFile(wb, "Arden-students-template.xlsx");
+    return;
+  }
+  if (kind === "staff") {
+    XLSX.utils.book_append_sheet(wb, sheet(SAMPLE_STAFF, "Staff").ws, "Staff");
+    XLSX.writeFile(wb, "Arden-staff-template.xlsx");
+    return;
+  }
+  XLSX.utils.book_append_sheet(wb, sheet(SAMPLE_ITEMS, "Stores").ws, "Stores");
+  XLSX.writeFile(wb, "Arden-stores-template.xlsx");
 }
 
 export function downloadCampusLookup(campus: CampusData, categories: Category[]) {

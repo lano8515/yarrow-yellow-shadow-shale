@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { IssueDialog } from "@/components/issue-dialog";
+import { BulkPeopleImport } from "@/components/bulk-people-import";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +45,7 @@ function InventoryPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
   const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
   const [receiveItem, setReceiveItem] = useState<InventoryItem | null>(null);
 
@@ -59,14 +61,14 @@ function InventoryPage() {
       <PageHeader
         kicker="Stores"
         title="Inventory"
-        description="Every SKU on campus. Receive deliveries or issue to a student (admission no.) or staff (TSC / ID no.)."
+        description="Every SKU on campus. Bulk import from Excel or a pasted spreadsheet. Receive deliveries or issue to a student (admission no.) or staff (TSC / ID no.)."
         actions={
           <>
             <Button variant="outline" onClick={() => exportItems(itemsQ.data ?? [])}>
               <Download className="size-4" /> Excel
             </Button>
-            <Button variant="outline" asChild>
-              <Link to="/import"><FileSpreadsheet className="size-4" /> Import</Link>
+            <Button variant="outline" onClick={() => setBulkOpen(true)}>
+              <FileSpreadsheet className="size-4" /> Bulk import
             </Button>
             <Button variant="outline" onClick={() => setIssueOpen(true)}>Issue</Button>
             <Button onClick={() => setOpen(true)}><Plus className="size-4" /> Add item</Button>
@@ -132,6 +134,7 @@ function InventoryPage() {
         </div>
       </Card>
       <AddItemDialog open={open} onOpenChange={setOpen} categories={catsQ.data ?? []} onSaved={() => qc.invalidateQueries({ queryKey: ["items"] })} />
+      <BulkPeopleImport kind="items" open={bulkOpen} onOpenChange={setBulkOpen} />
       <ReceiveDialog item={receiveItem} onOpenChange={(v) => !v && setReceiveItem(null)} onSaved={() => { qc.invalidateQueries(); setReceiveItem(null); }} />
       <IssueDialog open={issueOpen} onOpenChange={setIssueOpen} items={itemsQ.data ?? []} students={studentsQ.data ?? []} staff={staffQ.data ?? []} />
     </div>

@@ -133,7 +133,7 @@ function ImportPage() {
               ref={fileRef}
               type="file"
               accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
-              className="sr-only"
+              className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) void onFile(file);

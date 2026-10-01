@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { IssueDialog } from "@/components/issue-dialog";
+import { BulkPeopleImport } from "@/components/bulk-people-import";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ function StaffPage() {
   const [q, setQ] = useState("");
   const [role, setRole] = useState<"all" | StaffRole>("all");
   const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [issueFor, setIssueFor] = useState<StaffMember | null>(null);
 
   const rows = useMemo(() => {
@@ -68,14 +70,14 @@ function StaffPage() {
       <PageHeader
         kicker="People"
         title="Teachers and staff"
-        description="Teaching staff are keyed by TSC number. Non-teaching staff are keyed by national ID number."
+        description="Teaching staff are keyed by TSC number. Non-teaching staff are keyed by national ID number. Bulk import from Excel or a pasted spreadsheet."
         actions={
           <>
             <Button variant="outline" onClick={() => exportStaff(staffQ.data ?? [])}>
               <Download className="size-4" /> Excel
             </Button>
-            <Button variant="outline" asChild>
-              <Link to="/import"><FileSpreadsheet className="size-4" /> Import</Link>
+            <Button variant="outline" onClick={() => setBulkOpen(true)}>
+              <FileSpreadsheet className="size-4" /> Bulk import
             </Button>
             <Button onClick={() => setOpen(true)}><Plus className="size-4" /> Add staff</Button>
           </>
@@ -126,6 +128,7 @@ function StaffPage() {
         ))}
       </div>
       <RegisterStaffDialog open={open} onOpenChange={setOpen} onSaved={() => qc.invalidateQueries({ queryKey: ["staff"] })} />
+      <BulkPeopleImport kind="staff" open={bulkOpen} onOpenChange={setBulkOpen} />
       <IssueDialog
         open={!!issueFor}
         onOpenChange={(v) => !v && setIssueFor(null)}
